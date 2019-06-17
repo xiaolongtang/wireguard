@@ -1,18 +1,18 @@
 #!/bin/bash
 
-#判断系统
+#os
 if [ ! -e '/etc/redhat-release' ]; then
-echo "仅支持centos7"
+echo "only support centos7"
 exit
 fi
 if  [ -n "$(grep ' 6\.' /etc/redhat-release)" ] ;then
-echo "仅支持centos7"
+echo "only support centos7"
 exit
 fi
 
 
 
-#更新内核
+#update os
 update_kernel(){
 
     yum -y install epel-release curl
@@ -27,15 +27,15 @@ update_kernel(){
     wget https://elrepo.org/linux/kernel/el7/x86_64/RPMS/kernel-ml-devel-4.19.1-1.el7.elrepo.x86_64.rpm
     rpm -ivh kernel-ml-devel-4.19.1-1.el7.elrepo.x86_64.rpm
     yum -y --enablerepo=elrepo-kernel install kernel-ml-devel
-    read -p "需要重启VPS，再次执行脚本选择安装wireguard，是否现在重启 ? [Y/n] :" yn
+    read -p "restart VPS，and install wireguard，do you want to restart it? [Y/n] :" yn
 	[ -z "${yn}" ] && yn="y"
 	if [[ $yn == [Yy] ]]; then
-		echo -e "VPS 重启中..."
+		echo -e "VPS restarting..."
 		reboot
 	fi
 }
 
-#生成随机端口
+#create random port
 rand(){
     min=$1
     max=$(($2-$min+1))
@@ -45,14 +45,14 @@ rand(){
 
 wireguard_update(){
     yum update -y wireguard-dkms wireguard-tools
-    echo "更新完成"
+    echo "finish update"
 }
 
 wireguard_remove(){
     wg-quick down wg0
     yum remove -y wireguard-dkms wireguard-tools
     rm -rf /etc/wireguard/
-    echo "卸载完成"
+    echo "finish uninstall"
 }
 
 config_client(){
@@ -72,7 +72,7 @@ EOF
 
 }
 
-#centos7安装wireguard
+#centos7 install wireguard
 wireguard_install(){
     curl -Lo /etc/yum.repos.d/wireguard.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo
     yum install -y dkms gcc-c++ gcc-gfortran glibc-headers glibc-devel libquadmath-devel libtool systemtap systemtap-devel
@@ -123,12 +123,12 @@ EOF
     wg-quick up wg0
     systemctl enable wg-quick@wg0
     content=$(cat /etc/wireguard/client.conf)
-    echo "电脑端请下载client.conf，手机端可直接使用软件扫码"
+    echo "use your pc download the client.conf，mobile phone scan the qr code"
     echo "${content}" | qrencode -o - -t UTF8
 }
 add_user(){
-    echo -e "\033[37;41m给新用户起个名字，不能和已有用户重复\033[0m"
-    read -p "请输入用户名：" newname
+    echo -e "\033[37;41mcreate a user name, it cannot be the same\033[0m"
+read -p "user name:" newname
     cd /etc/wireguard/
     cp client.conf $newname.conf
     wg genkey | tee temprikey | wg pubkey > tempubkey
@@ -143,27 +143,27 @@ PublicKey = $(cat tempubkey)
 AllowedIPs = 10.0.0.$newnum/32
 EOF
     wg set wg0 peer $(cat tempubkey) allowed-ips 10.0.0.$newnum/32
-    echo -e "\033[37;41m添加完成，文件：/etc/wireguard/$newname.conf\033[0m"
+echo -e "\033[37;41m added path:/etc/wireguard/$newname.conf\033[0m"
     rm -f temprikey tempubkey
 }
 #开始菜单
 start_menu(){
     clear
     echo "========================="
-    echo " 介绍：适用于CentOS7"
-    echo " 作者：atrandys"
-    echo " 网站：www.atrandys.com"
+    echo " for：CentOS7"
+    echo " author：atrandys"
+    echo " site：www.atrandys.com"
     echo " Youtube：atrandys"
     echo "========================="
-    echo "1. 升级系统内核"
-    echo "2. 安装wireguard"
-    echo "3. 升级wireguard"
-    echo "4. 卸载wireguard"
-    echo "5. 显示客户端二维码"
-    echo "6. 增加用户"
-    echo "0. 退出脚本"
+    echo "1. upgrade os"
+    echo "2. install wireguard"
+    echo "3. upgrade wireguard"
+    echo "4. uninstall wireguard"
+    echo "5. show qr code"
+    echo "6. add a user"
+    echo "0. exit"
     echo
-    read -p "请输入数字:" num
+    read -p "type number:" num
     case "$num" in
     	1)
 	update_kernel
@@ -189,7 +189,7 @@ start_menu(){
 	;;
 	*)
 	clear
-	echo "请输入正确数字"
+	echo "type correct number"
 	sleep 5s
 	start_menu
 	;;
